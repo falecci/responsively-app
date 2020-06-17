@@ -14,10 +14,9 @@ import {
   getAllShortcuts,
   registerShortcut,
 } from './shortcut-manager/main-shortcut-manager';
-import {
-  appUpdater, 
-  AppUpdaterState
-} from './app-updater';
+import {appUpdater, AppUpdaterState} from './app-updater';
+import {statusBarSettings} from './settings/statusBarSettings';
+import {STATUS_BAR_VISIBILITY_CHANGE} from './constants/pubsubEvents';
 
 const path = require('path');
 
@@ -105,13 +104,16 @@ export default class MenuBuilder {
         id: 'CHECK_FOR_UPDATES',
         click() {
           appUpdater.checkForUpdatesAndNotify().then(r => {
-            if (r == null || r.updateInfo == null || r.updateInfo.version === pkg.version) {
-              dialog
-                .showMessageBox(BrowserWindow.getAllWindows()[0], {
-                  type: 'info',
-                  title: 'Responsively',
-                  message: 'There are currently no updates available'
-                });
+            if (
+              r == null ||
+              r.updateInfo == null ||
+              r.updateInfo.version === pkg.version
+            ) {
+              dialog.showMessageBox(BrowserWindow.getAllWindows()[0], {
+                type: 'info',
+                title: 'Responsively',
+                message: 'There are currently no updates available',
+              });
             }
           });
         },
@@ -191,12 +193,11 @@ export default class MenuBuilder {
     const updaterState = appUpdater.getCurrentState();
     let label = 'Check for Updates...';
     let enabled = true;
-    
+
     if (updaterState === AppUpdaterState.Checking) {
       enabled = false;
       label = 'Checking for Updates...';
-    }
-    else if (updaterState === AppUpdaterState.Downloading) {
+    } else if (updaterState === AppUpdaterState.Downloading) {
       enabled = false;
       label = 'Downloading Update...';
     }
@@ -205,10 +206,11 @@ export default class MenuBuilder {
   }
 
   buildMenu(isUpdate: boolean = false) {
-
     if (isUpdate) {
-      const chkUpdtMenu = this.subMenuHelp.submenu.find(x => x.id === 'CHECK_FOR_UPDATES');
-      const {label, enabled} = this.getCheckForUpdatesMenuState(); 
+      const chkUpdtMenu = this.subMenuHelp.submenu.find(
+        x => x.id === 'CHECK_FOR_UPDATES'
+      );
+      const {label, enabled} = this.getCheckForUpdatesMenuState();
       chkUpdtMenu.label = label;
       chkUpdtMenu.enabled = enabled;
     }
@@ -340,6 +342,19 @@ export default class MenuBuilder {
             this.mainWindow.toggleDevTools();
           },
         },
+        {
+          label: 'Show Status Bar',
+          type: 'checkbox',
+          checked: statusBarSettings.getVisibility(),
+          click: () => {
+            const newVisibility = !statusBarSettings.getVisibility();
+            statusBarSettings.setVisibility(newVisibility);
+            this.mainWindow.webContents.send(
+              STATUS_BAR_VISIBILITY_CHANGE,
+              newVisibility
+            );
+          },
+        },
       ],
     };
     const subMenuViewProd = {
@@ -371,6 +386,19 @@ export default class MenuBuilder {
           accelerator: 'Ctrl+Command+F',
           click: () => {
             this.mainWindow.setFullScreen(!this.mainWindow.isFullScreen());
+          },
+        },
+        {
+          label: 'Show Status Bar',
+          type: 'checkbox',
+          checked: statusBarSettings.getVisibility(),
+          click: () => {
+            const newVisibility = !statusBarSettings.getVisibility();
+            statusBarSettings.setVisibility(newVisibility);
+            this.mainWindow.webContents.send(
+              STATUS_BAR_VISIBILITY_CHANGE,
+              newVisibility
+            );
           },
         },
       ],
@@ -446,6 +474,19 @@ export default class MenuBuilder {
                     this.mainWindow.toggleDevTools();
                   },
                 },
+                {
+                  label: 'Show Status Bar',
+                  type: 'checkbox',
+                  checked: statusBarSettings.getVisibility(),
+                  click: () => {
+                    const newVisibility = !statusBarSettings.getVisibility();
+                    statusBarSettings.setVisibility(newVisibility);
+                    this.mainWindow.webContents.send(
+                      STATUS_BAR_VISIBILITY_CHANGE,
+                      newVisibility
+                    );
+                  },
+                },
               ]
             : [
                 {
@@ -477,6 +518,19 @@ export default class MenuBuilder {
                   click: () => {
                     this.mainWindow.setFullScreen(
                       !this.mainWindow.isFullScreen()
+                    );
+                  },
+                },
+                {
+                  label: 'Show Status Bar',
+                  type: 'checkbox',
+                  checked: statusBarSettings.getVisibility(),
+                  click: () => {
+                    const newVisibility = !statusBarSettings.getVisibility();
+                    statusBarSettings.setVisibility(newVisibility);
+                    this.mainWindow.webContents.send(
+                      STATUS_BAR_VISIBILITY_CHANGE,
+                      newVisibility
                     );
                   },
                 },
